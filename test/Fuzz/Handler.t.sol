@@ -30,9 +30,12 @@ contract Handler is Test {
     }
 
     //depo and swapOut
-
     function deposit(uint256 wethAmount) public {
-        wethAmount = bound(wethAmount, 0, type(uint256).max);
+        wethAmount = bound(
+            wethAmount,
+            pool.getMinimumWethDepositAmount(),
+            weth.balanceOf(address(pool))
+        );
         startingX = int256(poolToken.balanceOf(address(pool)));
         startingY = int256(weth.balanceOf(address(pool)));
         expectedDeltaY = int256(wethAmount);
@@ -65,7 +68,7 @@ contract Handler is Test {
 
     function swapPoolTokenFOrWethBAsedOnOutputWeth(uint256 outputWeth) public {
         uint256 minWeth = pool.getMinimumWethDepositAmount();
-        outputWeth = bound(outputWeth, minWeth, type(uint256).max);
+        outputWeth = bound(outputWeth, minWeth, weth.balanceOf(address(pool)));
         if (outputWeth >= weth.balanceOf(address(pool))) {
             return;
         }
@@ -82,9 +85,7 @@ contract Handler is Test {
         startingX = int256(poolToken.balanceOf(address(pool)));
         startingY = int256(weth.balanceOf(address(pool)));
         expectedDeltaY = int256(-1) * int256(outputWeth);
-        expectedDeltaX = int256(
-            pool.getPoolTokensToDepositBasedOnWeth(poolTokenAmount)
-        );
+        expectedDeltaX = int256(poolTokenAmount);
         if (poolToken.balanceOf(address(swapper)) < poolTokenAmount) {
             poolToken.mint(
                 swapper,
