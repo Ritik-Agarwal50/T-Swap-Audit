@@ -39,8 +39,7 @@ contract Handler is Test {
         expectedDeltaX = int256(
             pool.getPoolTokensToDepositBasedOnWeth(wethAmount)
         );
-
-        //deposit reffering from main contract
+        //deposit
 
         vm.startPrank(liquidutyProvider);
         weth.mint(liquidutyProvider, wethAmount);
