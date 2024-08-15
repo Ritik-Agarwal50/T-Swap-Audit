@@ -42,7 +42,7 @@ contract TSwapPool is ERC20 {
     //////////////////////////////////////////////////////////////*/
     IERC20 private immutable i_wethToken;
     IERC20 private immutable i_poolToken;
-    //@audit this type of large literrals is not recommended, use scientific notation instead like 1e18.
+    //@audit-done this type of large literrals is not recommended, use scientific notation instead like 1e18.
     uint256 private constant MINIMUM_WETH_LIQUIDITY = 1_000_000_000;
     uint256 private swap_count = 0;
     uint256 private constant SWAP_COUNT_MAX = 10;
@@ -89,7 +89,7 @@ contract TSwapPool is ERC20 {
                                FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
-    //@audit check the zero address.
+    //@audit-done check the zero address.
     constructor(
         address poolToken,
         address wethToken,
@@ -134,7 +134,7 @@ contract TSwapPool is ERC20 {
         }
         if (totalLiquidityTokenSupply() > 0) {
             uint256 wethReserves = i_wethToken.balanceOf(address(this));
-            //@audit dont use this line of code, because it is not used anywhere. It should be good if you remove it.
+            //@audit-done dont use this line of code, because it is not used anywhere. It should be good if you remove it.
             uint256 poolTokenReserves = i_poolToken.balanceOf(address(this));
             // Our invariant says weth, poolTokens, and liquidity tokens must always have the same ratio after the
             // initial deposit
@@ -200,7 +200,6 @@ contract TSwapPool is ERC20 {
         uint256 poolTokensToDeposit,
         uint256 liquidityTokensToMint
     ) private {
-        //@audit ths is not a good practice diretly minting token there should be some checks before minting the token.
         _mint(msg.sender, liquidityTokensToMint);
         //@audit this is emitted in wrong order, swap the 2 and 3rd params
         emit LiquidityAdded(msg.sender, poolTokensToDeposit, wethToDeposit);
@@ -287,7 +286,7 @@ contract TSwapPool is ERC20 {
         // (totalWethOfPool * totalPoolTokensOfPool) + (wethToDeposit * totalPoolTokensOfPool) = k - (totalWethOfPool *
         // poolTokensToDeposit) - (wethToDeposit * poolTokensToDeposit)
 
-        //@audit dont use magic number if you are using it multiple times make it constant it will save your gas as well.
+        //@audit-done dont use magic number if you are using it multiple times make it constant it will save your gas as well.
         uint256 inputAmountMinusFee = inputAmount * 997;
         uint256 numerator = inputAmountMinusFee * outputReserves;
         uint256 denominator = (inputReserves * 1000) + inputAmountMinusFee;
@@ -305,7 +304,7 @@ contract TSwapPool is ERC20 {
         revertIfZero(outputReserves)
         returns (uint256 inputAmount)
     {
-        //@audit [HIGH BUG]`10000` is wrong it shoukd be `1000` af per used above in line 292 and fees are 0.3%.
+        //@audit-done [HIGH BUG]`10000` is wrong it shoukd be `1000` af per used above in line 292 and fees are 0.3%.
         return
             ((inputReserves * outputAmount) * 10000) /
             ((outputReserves - outputAmount) * 997);
