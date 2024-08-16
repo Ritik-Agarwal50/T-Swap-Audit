@@ -1,4 +1,90 @@
-<!-- @format -->
+---
+title: T-Swap Protocol Audit Report
+author: Ritik Agarwal
+date: Auguest 16, 2024
+---
+
+Lead Auditors: 
+- Ritik Agarwal
+
+# Table of Contents
+- [Table of Contents](#table-of-contents)
+- [Protocol Summary](#protocol-summary)
+- [Disclaimer](#disclaimer)
+- [Risk Classification](#risk-classification)
+- [Audit Details](#audit-details)
+  - [Scope](#scope)
+  - [Roles](#roles)
+  - [Issues found](#issues-found)
+- [Findings](#findings)
+- [High](#high)
+  - [\[H-1\] `TSwapPool::deposit` is missing deadline check causing transactions to complete even after the deadline](#h-1-tswappooldeposit-is-missing-deadline-check-causing-transactions-to-complete-even-after-the-deadline)
+  - [\[H-2\] Incorrect fee calculation in `TSwapPool::getInputAmountBasedOnOutput` causes protocll to take too many tokens from users, resulting in lost fees](#h-2-incorrect-fee-calculation-in-tswappoolgetinputamountbasedonoutput-causes-protocll-to-take-too-many-tokens-from-users-resulting-in-lost-fees)
+  - [\[H-3\] Lack of slippage protection in `TSwapPool::swapExactOutput` causes users to potentially receive way fewer tokens](#h-3-lack-of-slippage-protection-in-tswappoolswapexactoutput-causes-users-to-potentially-receive-way-fewer-tokens)
+  - [\[H-4\] `TSwapPool::sellPoolTokens` mismatches input and output tokens causing users to receive the incorrect amount of tokens](#h-4-tswappoolsellpooltokens-mismatches-input-and-output-tokens-causing-users-to-receive-the-incorrect-amount-of-tokens)
+  - [\[H-5\] In `TSwapPool::_swap` the extra tokens given to users after every `swapCount` breaks the protocol invariant of `x * y = k`](#h-5-in-tswappool_swap-the-extra-tokens-given-to-users-after-every-swapcount-breaks-the-protocol-invariant-of-x--y--k)
+- [Low](#low)
+  - [\[L-1\] In `PoolFactory::createPool` function wrong concatenation of strings has been done.](#l-1-in-poolfactorycreatepool-function-wrong-concatenation-of-strings-has-been-done)
+  - [\[L-2\] `TSwapPool::deposit` function has unused variable `poolTokenReserves`.](#l-2-tswappooldeposit-function-has-unused-variable-pooltokenreserves)
+- [Informational](#informational)
+  - [\[I-1\] `PUSH0` is not supported by all chains](#i-1-push0-is-not-supported-by-all-chains)
+  - [\[I-2\] In `PoolFactory__PoolDoesNotExist` this custom error is not used anywhere in the contract.](#i-2-in-poolfactory__pooldoesnotexist-this-custom-error-is-not-used-anywhere-in-the-contract)
+  - [\[I-3\] `PoolFactory::PoolCreated` Event is missing indexed fields.](#i-3-poolfactorypoolcreated-event-is-missing-indexed-fields)
+  - [\[I-4\] In `PoolFactory` contract, constructor is not checking for zero address.](#i-4-in-poolfactory-contract-constructor-is-not-checking-for-zero-address)
+  - [\[I-5\]: Large literal values multiples of 10000 can be replaced with scientific notation](#i-5-large-literal-values-multiples-of-10000-can-be-replaced-with-scientific-notation)
+  - [\[I-6\] In `TSwapPool` contract, constructor is not checking for zero address.](#i-6-in-tswappool-contract-constructor-is-not-checking-for-zero-address)
+  - [\[I-7\] Use of `magic numbers` in TSwapPool::getOutputAmountBasedOnInput\` should be avoided.](#i-7-use-of-magic-numbers-in-tswappoolgetoutputamountbasedoninput-should-be-avoided)
+
+# Protocol Summary
+
+This project is meant to be a permissionless way for users to swap assets between each other at a fair price. You can think of T-Swap as a decentralized asset/token exchange (DEX). 
+T-Swap is known as an [Automated Market Maker (AMM)](https://chain.link/education-hub/what-is-an-automated-market-maker-amm) because it doesn't use a normal "order book" style exchange, instead it uses "Pools" of an asset. 
+It is similar to Uniswap. To understand Uniswap, please watch this video: [Uniswap Explained](https://www.youtube.com/watch?v=DLu35sIqVTM)
+
+# Disclaimer
+
+The Ritik Agarwal team makes all effort to find as many vulnerabilities in the code in the given time period, but holds no responsibilities for the findings provided in this document. A security audit by the team is not an endorsement of the underlying business or product. The audit was time-boxed and the review of the code was solely on the security aspects of the Solidity implementation of the contracts.
+
+# Risk Classification
+
+|            |        | Impact |        |     |
+| ---------- | ------ | ------ | ------ | --- |
+|            |        | High   | Medium | Low |
+|            | High   | H      | H/M    | M   |
+| Likelihood | Medium | H/M    | M      | M/L |
+|            | Low    | M      | M/L    | L   |
+
+We use the [CodeHawks](https://docs.codehawks.com/hawks-auditors/how-to-evaluate-a-finding-severity) severity matrix to determine severity. See the documentation for more details.
+
+# Audit Details 
+
+- Commit Hash: e643a8d4c2c802490976b538dd009b351b1c8dda
+- Solc Version: 0.8.20
+- Chain(s) to deploy contract to: Ethereum
+- Tokens:
+  - Any ERC20 token
+## Scope 
+- In Scope:
+```
+./src/
+#-- PoolFactory.sol
+#-- TSwapPool.sol
+```
+
+## Roles
+- Liquidity Providers: Users who have liquidity deposited into the pools. Their shares are represented by the LP ERC20 tokens. They gain a 0.3% fee every time a swap is made. 
+- Users: Users who want to swap tokens.
+## Issues found
+
+| Severtity | Number of issues found |
+| --------- | ---------------------- |
+| High      | 5                      |
+| Low       | 2                      |
+| Info      | 7                      |
+| Total     | 14                     |
+
+
+# Findings
 
 # High
 
@@ -194,8 +280,6 @@ Place the following into `TSwapPool.t.sol`.
 -        }
 ```
 
-# Medium
-
 # Low
 
 ## [L-1] In `PoolFactory::createPool` function wrong concatenation of strings has been done.
@@ -371,5 +455,3 @@ Place the following into `TSwapPool.t.sol`.
 +        uint256 denominator = (inputReserves * VALUE_AFTER_FEE_MULTIPLICATION) + inputAmountMinusFee;
 
 ```
-
-# Gas

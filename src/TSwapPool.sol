@@ -116,7 +116,6 @@ contract TSwapPool is ERC20 {
         uint256 wethToDeposit,
         uint256 minimumLiquidityTokensToMint,
         uint256 maximumPoolTokensToDeposit,
-        //@audit unused params, this can make disrupt the funality of the protocol.
         uint64 deadline
     )
         external
@@ -125,7 +124,6 @@ contract TSwapPool is ERC20 {
     {
         if (wethToDeposit < MINIMUM_WETH_LIQUIDITY) {
             revert TSwapPool__WethDepositAmountTooLow(
-                // @audit this is not req  to be emitted because it already constant.
                 MINIMUM_WETH_LIQUIDITY,
                 wethToDeposit
             );
@@ -183,7 +181,6 @@ contract TSwapPool is ERC20 {
                 maximumPoolTokensToDeposit,
                 wethToDeposit
             );
-            //@audit it would be better of it would be above  the line 183. Pls follow CEI
             liquidityTokensToMint = wethToDeposit;
         }
     }
@@ -198,7 +195,6 @@ contract TSwapPool is ERC20 {
         uint256 liquidityTokensToMint
     ) private {
         _mint(msg.sender, liquidityTokensToMint);
-        //@audit this is emitted in wrong order, swap the 2 and 3rd params
         emit LiquidityAdded(msg.sender, poolTokensToDeposit, wethToDeposit);
 
         // Interactions
@@ -316,7 +312,6 @@ contract TSwapPool is ERC20 {
         revertIfZero(inputAmount)
         revertIfDeadlinePassed(deadline)
         returns (
-            //@audit output is never be called.
             uint256 output
         )
     {
@@ -367,9 +362,6 @@ contract TSwapPool is ERC20 {
             outputReserves
         );
 
-        //@audit no slippage check is there, it should be there.
-
-
         _swap(inputToken, inputAmount, outputToken, outputAmount);
     }
 
@@ -383,7 +375,7 @@ contract TSwapPool is ERC20 {
         uint256 poolTokenAmount
     ) external returns (uint256 wethAmount) {
         return
-        //@audit this wrong, it should be `swapExactInput` instead of `swapExactOutput`
+
             swapExactOutput(
                 i_poolToken,
                 i_wethToken,
@@ -413,7 +405,6 @@ contract TSwapPool is ERC20 {
         ) {
             revert TSwapPool__InvalidToken();
         }
-        // @audit it will break the invariant, Eventually it will break the enitre protocol.
         swap_count++;
         if (swap_count >= SWAP_COUNT_MAX) {
             swap_count = 0;
